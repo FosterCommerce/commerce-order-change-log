@@ -1,0 +1,72 @@
+{
+	"name": "fostercommerce/commerce-order-change-log",
+	"description": "Order Change Log records changes made to completed Craft Commerce orders and the user who made each change.",
+	"homepage": "https://www.fostercommerce.com/craft-cms-plugins/order-change-log",
+	"type": "craft-plugin",
+	"keywords": [
+		"craft",
+		"plugin",
+		"commerce",
+		"orders",
+		"audit",
+		"change log"
+	],
+	"license": "proprietary",
+	"support": {
+		"email": "support@fostercommerce.com",
+		"issues": "https://github.com/fostercommerce/commerce-order-change-log/issues?state=open",
+		"source": "https://github.com/fostercommerce/commerce-order-change-log",
+		"docs": "https://www.fostercommerce.com/craft-cms-plugins/order-change-log/docs",
+		"rss": "https://github.com/fostercommerce/commerce-order-change-log/releases.atom"
+	},
+	"authors": [
+		{
+			"name": "Foster Commerce",
+			"homepage": "https://www.fostercommerce.com"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"fostercommerce\\orderchangelog\\": "src/"
+		}
+	},
+	"require": {
+		"php": "^8.2",
+		"craftcms/cms": "^5.6.0",
+		"craftcms/commerce": "^5.0.0"
+	},
+	"require-dev": {
+		"craftcms/phpstan": "dev-main",
+		"craftcms/rector": "dev-main",
+		"fostercommerce/ecs": "dev-main",
+		"fostercommerce/rector": "dev-main",
+		"phpunit/phpunit": "^11.5",
+		"roave/security-advisories": "dev-latest"
+	},
+	"extra": {
+		"handle": "order-change-log",
+		"name": "Order Change Log",
+		"developer": "Foster Commerce",
+		"documentationUrl": "https://www.fostercommerce.com/craft-cms-plugins/order-change-log/docs",
+		"class": "fostercommerce\\orderchangelog\\Plugin"
+	},
+	"config": {
+		"allow-plugins": {
+			"yiisoft/yii2-composer": true,
+			"craftcms/plugin-installer": true
+		},
+		"platform": {
+			"php": "8.2"
+		}
+	},
+	"prefer-stable": true,
+	"minimum-stability": "dev",
+	"scripts": {
+		"phpstan": "phpstan --memory-limit=1G",
+		"ecs:check": "ecs check --ansi --memory-limit=1G",
+		"ecs:fix": "ecs check --ansi --fix --memory-limit=1G",
+		"rector:fix": "rector process --config rector.php",
+		"rector:dry-run": "rector process --dry-run --config rector.php",
+		"test": "phpunit --testsuite=unit"
+	}
+}

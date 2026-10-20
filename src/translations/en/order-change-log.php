@@ -1,0 +1,32 @@
+<?php
+
+return [
+	// Order tab
+	'tab.label' => 'Change Log',
+	'tab.empty' => 'This order has no recorded changes.',
+	'tab.column.date' => 'Date',
+	'tab.column.user' => 'User',
+	'tab.column.changes' => 'Changes',
+	'tab.column.total' => 'Order total',
+	'tab.system' => 'System',
+	'tab.signedInAs' => '(signed in as {user})',
+	'tab.onlyTotalChanged' => 'Only the order total changed',
+	'tab.added' => 'Added {qty} × {description}',
+	'tab.removed' => 'Removed {qty} × {description}',
+	'tab.quantityChanged' => '{description}: quantity {from} to {to}',
+	'tab.totalChanged' => '{description}: total {from} to {to}',
+	'tab.orderTotalChanged' => '{from} to {to}',
+	'tab.fieldChanged' => '{field}: {from} to {to}',
+	'tab.lineItemFieldChanged' => '{description}: {field} {from} to {to}',
+	'tab.none' => 'None',
+	'tab.field.shippingMethod' => 'Shipping method',
+	'tab.field.couponCode' => 'Coupon code',
+	'tab.field.email' => 'Customer email',
+	'tab.field.shippingAddress' => 'Shipping address',
+	'tab.field.billingAddress' => 'Billing address',
+	'tab.lineItemField.options' => 'options',
+	'tab.lineItemField.note' => 'customer note',
+	'tab.lineItemField.privateNote' => 'private note',
+	'tab.lineItemField.status' => 'status',
+	'tab.orderTotalUnchanged' => 'Unchanged',
+];

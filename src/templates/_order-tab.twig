@@ -1,0 +1,92 @@
+{# @var order \craft\commerce\elements\Order #}
+{% macro userName(userId, storedName) %}
+	{%- set user = userId ? craft.users.id(userId).status(null).one() : null -%}
+	{%- if user -%}
+		<a href="{{ user.cpEditUrl }}">{{ user.friendlyName }}</a>
+	{%- else -%}
+		{{ storedName }}
+	{%- endif -%}
+{% endmacro %}
+<div id="orderChangeLogTab" class="hidden">
+	{% if changes|length %}
+		<table class="data fullwidth">
+			<thead>
+				<tr>
+					<th scope="col">{{ 'tab.column.date'|t('order-change-log') }}</th>
+					<th scope="col">{{ 'tab.column.user'|t('order-change-log') }}</th>
+					<th scope="col">{{ 'tab.column.changes'|t('order-change-log') }}</th>
+					<th scope="col">{{ 'tab.column.total'|t('order-change-log') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for change in changes %}
+					{% set data = change.data %}
+					<tr>
+						<td class="nowrap">{{ change.dateCreated|datetime('short') }}</td>
+						<td>
+							{% if change.impersonatorName %}
+								{{ _self.userName(change.impersonatorId, change.impersonatorName) }}
+								<span class="light">{{ 'tab.signedInAs'|t('order-change-log', { user: change.userName }) }}</span>
+							{% elseif change.userName %}
+								{{ _self.userName(change.userId, change.userName) }}
+							{% else %}
+								{{ 'tab.system'|t('order-change-log') }}
+							{% endif %}
+						</td>
+						<td>
+							{% if not data.added and not data.removed and not data.updated and not data.fields and not data.customFields %}
+								{{ 'tab.onlyTotalChanged'|t('order-change-log') }}
+							{% endif %}
+							<ul>
+								{% for lineItem in data.added %}
+									<li>{{ 'tab.added'|t('order-change-log', { qty: lineItem.qty, description: lineItem.description }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+								{% endfor %}
+								{% for lineItem in data.removed %}
+									<li>{{ 'tab.removed'|t('order-change-log', { qty: lineItem.qty, description: lineItem.description }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+								{% endfor %}
+								{% for lineItem in data.updated %}
+									{% if lineItem.qtyFrom != lineItem.qtyTo %}
+										<li>{{ 'tab.quantityChanged'|t('order-change-log', { description: lineItem.description, from: lineItem.qtyFrom, to: lineItem.qtyTo }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+									{% elseif lineItem.totalFrom != lineItem.totalTo %}
+										<li>{{ 'tab.totalChanged'|t('order-change-log', { description: lineItem.description, from: lineItem.totalFrom|currency(order.currency), to: lineItem.totalTo|currency(order.currency) }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+									{% endif %}
+									{% for field in lineItem.fields %}
+										<li>{{ 'tab.lineItemFieldChanged'|t('order-change-log', {
+											description: lineItem.description,
+											field: ('tab.lineItemField.' ~ field.field)|t('order-change-log'),
+											from: field.from ?? 'tab.none'|t('order-change-log'),
+											to: field.to ?? 'tab.none'|t('order-change-log'),
+										}) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+									{% endfor %}
+								{% endfor %}
+								{% for field in data.fields %}
+									<li>{{ 'tab.fieldChanged'|t('order-change-log', {
+										field: ('tab.field.' ~ field.field)|t('order-change-log'),
+										from: field.from ?? 'tab.none'|t('order-change-log'),
+										to: field.to ?? 'tab.none'|t('order-change-log'),
+									}) }}</li>
+								{% endfor %}
+								{% for customField in data.customFields %}
+									<li>{{ 'tab.fieldChanged'|t('order-change-log', {
+										field: customField.name,
+										from: customField.from ?? 'tab.none'|t('order-change-log'),
+										to: customField.to ?? 'tab.none'|t('order-change-log'),
+									}) }}</li>
+								{% endfor %}
+							</ul>
+						</td>
+						<td class="nowrap">
+							{% if data.totalFrom != data.totalTo %}
+								{{ 'tab.orderTotalChanged'|t('order-change-log', { from: data.totalFrom|currency(order.currency), to: data.totalTo|currency(order.currency) }) }}
+							{% else %}
+								{{ 'tab.orderTotalUnchanged'|t('order-change-log') }}
+							{% endif %}
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	{% else %}
+		<p class="zilch">{{ 'tab.empty'|t('order-change-log') }}</p>
+	{% endif %}
+</div>
