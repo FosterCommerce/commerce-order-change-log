@@ -13,6 +13,8 @@ Each time a completed order or one of its addresses is saved, the plugin compare
 - the order total before and after;
 - the user who made the change, the user who impersonated them, if any, and the time.
 
+When an order is placed, the plugin records it as an “Order placed” change: each line item with its quantity, total, SKU, options, and notes, and the order's total, customer email, shipping method, coupon code, addresses, and custom fields. The change is credited to the user who placed the order, or to the order's customer when no user is signed in. Later changes compare against it.
+
 A user impersonates another user with **Sign in as** on the user's account page, or with an impersonation URL.
 
 The plugin compares an address as one line: name, organization, tax ID, address lines, dependent locality, locality, administrative area, postal code, sorting code, and country code. Empty parts are left out.
@@ -26,8 +28,10 @@ The plugin compares an address as one line: name, organization, tax ID, address 
 | Adjustments, such as a discount or shipping cost | Recorded only as a change to line item and order totals |
 | Address custom fields | Not recorded |
 | Matrix, Content Block, and Addresses fields, and generated fields | Not recorded |
-| Carts and the save that completes an order | Not recorded. The first recorded change is the first change after checkout. |
-| Changes made before the plugin was installed | Not recorded |
+| Carts | Not recorded. The first recorded change is the order as placed. |
+| Orders placed and changes made before the plugin was installed | Not recorded |
+| Orders saved as completed without checkout, such as by an import | No “Order placed” change |
+| A line item status set when the order completes | Not recorded. The “Order placed” change shows the status before it was set. |
 
 ## Read the Change Log tab
 
@@ -42,6 +46,7 @@ Open an order from **Commerce -> Orders** and select the **Change Log** tab. The
 
 ### What each line shows
 
+- “Order placed” lists the order as placed, with each value it had.
 - Each added or removed line item shows its quantity, description, and SKU.
 - If a line item's quantity changed, the line shows the quantity before and after. If only its total changed, the line shows the total before and after.
 - Each option, note, or status change on a line item gets its own line. Options show as Craft stores them, such as `{"size":"Large"}`.

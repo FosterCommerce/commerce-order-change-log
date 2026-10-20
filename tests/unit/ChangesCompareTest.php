@@ -166,6 +166,49 @@ final class ChangesCompareTest extends TestCase
 		], $data['updated'][0]['fields']);
 	}
 
+	public function testDescribesAPlacedOrderWithOnlyItsValues(): void
+	{
+		$state = $this->state('25.0000', [
+			1 => $this->lineItem('Red Shirt', 'SHIRT-RED', 1, '25.0000', [
+				'options' => null,
+				'note' => 'Gift wrap',
+			]),
+		], [
+			'shippingMethod' => 'Ground',
+			'couponCode' => null,
+		], [
+			'uid-gift-note' => 'Happy birthday',
+		]);
+
+		self::assertSame([
+			'placed' => true,
+			'lineItems' => [
+				[
+					'description' => 'Red Shirt',
+					'sku' => 'SHIRT-RED',
+					'qty' => 1,
+					'total' => '25.0000',
+					'fields' => [
+						'note' => 'Gift wrap',
+					],
+				],
+			],
+			'fields' => [
+				'shippingMethod' => 'Ground',
+			],
+			'customFields' => [
+				[
+					'fieldUid' => 'uid-gift-note',
+					'name' => 'Gift note',
+					'value' => 'Happy birthday',
+				],
+			],
+			'total' => '25.0000',
+		], (new Changes())->describePlacedOrder($state, [
+			'uid-gift-note' => 'Gift note',
+		]));
+	}
+
 	public function testNamesCustomFieldChanges(): void
 	{
 		$before = $this->state('25.0000', [], [], [

@@ -30,11 +30,15 @@ use yii\base\Component;
  * @phpstan-type LineItemSummary array{description: string, sku: string, qty: int}
  * @phpstan-type LineItemUpdate array{description: string, sku: string, qtyFrom: int, qtyTo: int, totalFrom: string, totalTo: string, fields: list<FieldChange>}
  * @phpstan-type ChangeData array{added: list<LineItemSummary>, removed: list<LineItemSummary>, updated: list<LineItemUpdate>, fields: list<FieldChange>, customFields: list<CustomFieldChange>, totalFrom: string, totalTo: string}
+ * @phpstan-type PlacedLineItem array{description: string, sku: string, qty: int, total: string, fields: array<string, string>}
+ * @phpstan-type PlacedData array{placed: true, lineItems: list<PlacedLineItem>, fields: array<string, string>, customFields: list<array{fieldUid: string, name: string, value: string}>, total: string}
  */
 class Changes extends Component
 {
 	/**
-	 * @var array<int, OrderState>
+	 * Order states before each save, keyed by order ID. Null marks a cart, so the save that completes it records the order as placed.
+	 *
+	 * @var array<int, ?OrderState>
 	 */
 	private array $statesBeforeSave = [];
 
@@ -48,7 +52,7 @@ class Changes extends Component
 	/**
 	 * Get an order's changes, newest first.
 	 *
-	 * @return list<array{userId: ?int, userName: ?string, impersonatorId: ?int, impersonatorName: ?string, dateCreated: DateTime, data: ChangeData}>
+	 * @return list<array{userId: ?int, userName: ?string, impersonatorId: ?int, impersonatorName: ?string, dateCreated: DateTime, data: ChangeData|PlacedData}>
 	 */
 	public function getChangesForOrder(int $orderId): array
 	{
@@ -65,7 +69,7 @@ class Changes extends Component
 		$changes = [];
 		foreach ($records as $record) {
 			// Decode the column when the database returns JSON as text
-			/** @var ChangeData $data */
+			/** @var ChangeData|PlacedData $data */
 			$data = Json::decodeIfJson($record->data);
 			/** @var DateTime $dateCreated */
 			$dateCreated = DateTimeHelper::toDateTime($record->dateCreated);
@@ -154,7 +158,40 @@ class Changes extends Component
 	}
 
 	/**
-	 * Remember a completed order's recorded state before the order, or one of its addresses, saves.
+	 * Describe an order as it was placed, keeping only the values it has.
+	 *
+	 * @param OrderState $state
+	 * @param array<string, string> $fieldNames custom field names keyed by their field layout UID
+	 * @return PlacedData
+	 */
+	public function describePlacedOrder(array $state, array $fieldNames): array
+	{
+		$lineItems = [];
+		foreach ($state['lineItems'] as $lineItem) {
+			$lineItem['fields'] = array_filter($lineItem['fields'], static fn (?string $value): bool => $value !== null);
+			$lineItems[] = $lineItem;
+		}
+
+		$customFields = [];
+		foreach ($state['customFields'] as $fieldUid => $value) {
+			$customFields[] = [
+				'fieldUid' => $fieldUid,
+				'name' => $fieldNames[$fieldUid],
+				'value' => $value,
+			];
+		}
+
+		return [
+			'placed' => true,
+			'lineItems' => $lineItems,
+			'fields' => array_filter($state['fields'], static fn (?string $value): bool => $value !== null),
+			'customFields' => $customFields,
+			'total' => $state['total'],
+		];
+	}
+
+	/**
+	 * Remember an order's recorded state before the order, or one of its addresses, saves.
 	 */
 	public function rememberStateBeforeSave(int $orderId): void
 	{
@@ -164,13 +201,7 @@ class Changes extends Component
 			return;
 		}
 
-		unset($this->statesBeforeSave[$orderId], $this->saveTransactionLevels[$orderId]);
-		$state = $this->readState($orderId);
-		if ($state === null) {
-			return;
-		}
-
-		$this->statesBeforeSave[$orderId] = $state;
+		$this->statesBeforeSave[$orderId] = $this->readState($orderId);
 		$this->saveTransactionLevels[$orderId] = $transactionLevel;
 	}
 
@@ -188,12 +219,23 @@ class Changes extends Component
 		unset($this->statesBeforeSave[$orderId], $this->saveTransactionLevels[$orderId]);
 
 		$after = $this->readState($orderId);
-		$data = $after === null ? null : $this->compare($before, $after, $this->getCustomFieldNames());
+		if ($after === null) {
+			return;
+		}
+
+		$fieldNames = $this->getCustomFieldNames();
+		$data = $before === null ? $this->describePlacedOrder($after, $fieldNames) : $this->compare($before, $after, $fieldNames);
 		if ($data === null) {
 			return;
 		}
 
 		['user' => $user, 'impersonator' => $impersonator] = Plugin::getInstance()->getJobUsers()->getActingUsers();
+		// Credit the order's customer when no user is signed in
+		if ($before === null && $user === null) {
+			/** @var ?Order $order */
+			$order = Order::find()->id($orderId)->one();
+			$user = $order?->getCustomer();
+		}
 
 		$record = new Change();
 		$record->orderId = $orderId;
@@ -221,8 +263,6 @@ class Changes extends Component
 
 	/**
 	 * Read an order's recorded state from the database, or null when the ID is not a completed order.
-	 *
-	 * A null state before the completing save stops checkout from being recorded.
 	 *
 	 * @return ?OrderState
 	 */

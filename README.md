@@ -16,7 +16,7 @@ Order Change Log records changes made to completed Craft Commerce orders and the
 
 ## How it works
 
-After you install the plugin, it compares a completed order before and after each save of the order or one of its addresses, and records each difference with the user who made it. The plugin records a queue job's changes against the user who queued the job. It does not record carts, the save that completes an order, order status changes, payments, address custom fields, or Matrix fields.
+After you install the plugin, it compares a completed order before and after each save of the order or one of its addresses, and records each difference with the user who made it. The plugin records a queue job's changes against the user who queued the job. It also records each order as placed. It does not record carts, order status changes, payments, address custom fields, or Matrix fields.
 
 ## Requirements
 

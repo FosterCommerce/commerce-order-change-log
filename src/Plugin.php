@@ -85,7 +85,7 @@ class Plugin extends BasePlugin
 		Event::on(Order::class, Element::EVENT_BEFORE_SAVE, function (ModelEvent $modelEvent): void {
 			/** @var Order $order */
 			$order = $modelEvent->sender;
-			// Skip the state query for carts, because the plugin records only completed orders
+			// The completing save sets isCompleted before this check, so it reads the cart state the placed order is recorded from
 			if ($order->isCompleted && $order->id !== null) {
 				$this->getChanges()->rememberStateBeforeSave($order->id);
 			}

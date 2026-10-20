@@ -21,6 +21,7 @@
 			<tbody>
 				{% for change in changes %}
 					{% set data = change.data %}
+					{% set placed = data.placed ?? false %}
 					<tr>
 						<td class="nowrap">{{ change.dateCreated|datetime('short') }}</td>
 						<td>
@@ -34,49 +35,69 @@
 							{% endif %}
 						</td>
 						<td>
-							{% if not data.added and not data.removed and not data.updated and not data.fields and not data.customFields %}
-								{{ 'tab.onlyTotalChanged'|t('order-change-log') }}
-							{% endif %}
-							<ul>
-								{% for lineItem in data.added %}
-									<li>{{ 'tab.added'|t('order-change-log', { qty: lineItem.qty, description: lineItem.description }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
-								{% endfor %}
-								{% for lineItem in data.removed %}
-									<li>{{ 'tab.removed'|t('order-change-log', { qty: lineItem.qty, description: lineItem.description }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
-								{% endfor %}
-								{% for lineItem in data.updated %}
-									{% if lineItem.qtyFrom != lineItem.qtyTo %}
-										<li>{{ 'tab.quantityChanged'|t('order-change-log', { description: lineItem.description, from: lineItem.qtyFrom, to: lineItem.qtyTo }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
-									{% elseif lineItem.totalFrom != lineItem.totalTo %}
-										<li>{{ 'tab.totalChanged'|t('order-change-log', { description: lineItem.description, from: lineItem.totalFrom|currency(order.currency), to: lineItem.totalTo|currency(order.currency) }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
-									{% endif %}
-									{% for field in lineItem.fields %}
-										<li>{{ 'tab.lineItemFieldChanged'|t('order-change-log', {
-											description: lineItem.description,
-											field: ('tab.lineItemField.' ~ field.field)|t('order-change-log'),
+							{% if placed %}
+								<strong>{{ 'tab.orderPlaced'|t('order-change-log') }}</strong>
+								<ul>
+									{% for lineItem in data.lineItems %}
+										<li>{{ 'tab.placedLineItem'|t('order-change-log', { qty: lineItem.qty, description: lineItem.description, total: lineItem.total|currency(order.currency) }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+										{% for field, value in lineItem.fields %}
+											<li>{{ 'tab.placedLineItemField'|t('order-change-log', { description: lineItem.description, field: ('tab.lineItemField.' ~ field)|t('order-change-log'), value: value }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+										{% endfor %}
+									{% endfor %}
+									{% for field, value in data.fields %}
+										<li>{{ 'tab.placedField'|t('order-change-log', { field: ('tab.field.' ~ field)|t('order-change-log'), value: value }) }}</li>
+									{% endfor %}
+									{% for customField in data.customFields %}
+										<li>{{ 'tab.placedField'|t('order-change-log', { field: customField.name, value: customField.value }) }}</li>
+									{% endfor %}
+								</ul>
+							{% else %}
+								{% if not data.added and not data.removed and not data.updated and not data.fields and not data.customFields %}
+									{{ 'tab.onlyTotalChanged'|t('order-change-log') }}
+								{% endif %}
+								<ul>
+									{% for lineItem in data.added %}
+										<li>{{ 'tab.added'|t('order-change-log', { qty: lineItem.qty, description: lineItem.description }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+									{% endfor %}
+									{% for lineItem in data.removed %}
+										<li>{{ 'tab.removed'|t('order-change-log', { qty: lineItem.qty, description: lineItem.description }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+									{% endfor %}
+									{% for lineItem in data.updated %}
+										{% if lineItem.qtyFrom != lineItem.qtyTo %}
+											<li>{{ 'tab.quantityChanged'|t('order-change-log', { description: lineItem.description, from: lineItem.qtyFrom, to: lineItem.qtyTo }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+										{% elseif lineItem.totalFrom != lineItem.totalTo %}
+											<li>{{ 'tab.totalChanged'|t('order-change-log', { description: lineItem.description, from: lineItem.totalFrom|currency(order.currency), to: lineItem.totalTo|currency(order.currency) }) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+										{% endif %}
+										{% for field in lineItem.fields %}
+											<li>{{ 'tab.lineItemFieldChanged'|t('order-change-log', {
+												description: lineItem.description,
+												field: ('tab.lineItemField.' ~ field.field)|t('order-change-log'),
+												from: field.from ?? 'tab.none'|t('order-change-log'),
+												to: field.to ?? 'tab.none'|t('order-change-log'),
+											}) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+										{% endfor %}
+									{% endfor %}
+									{% for field in data.fields %}
+										<li>{{ 'tab.fieldChanged'|t('order-change-log', {
+											field: ('tab.field.' ~ field.field)|t('order-change-log'),
 											from: field.from ?? 'tab.none'|t('order-change-log'),
 											to: field.to ?? 'tab.none'|t('order-change-log'),
-										}) }}{% if lineItem.sku %} <code>{{ lineItem.sku }}</code>{% endif %}</li>
+										}) }}</li>
 									{% endfor %}
-								{% endfor %}
-								{% for field in data.fields %}
-									<li>{{ 'tab.fieldChanged'|t('order-change-log', {
-										field: ('tab.field.' ~ field.field)|t('order-change-log'),
-										from: field.from ?? 'tab.none'|t('order-change-log'),
-										to: field.to ?? 'tab.none'|t('order-change-log'),
-									}) }}</li>
-								{% endfor %}
-								{% for customField in data.customFields %}
-									<li>{{ 'tab.fieldChanged'|t('order-change-log', {
-										field: customField.name,
-										from: customField.from ?? 'tab.none'|t('order-change-log'),
-										to: customField.to ?? 'tab.none'|t('order-change-log'),
-									}) }}</li>
-								{% endfor %}
-							</ul>
+									{% for customField in data.customFields %}
+										<li>{{ 'tab.fieldChanged'|t('order-change-log', {
+											field: customField.name,
+											from: customField.from ?? 'tab.none'|t('order-change-log'),
+											to: customField.to ?? 'tab.none'|t('order-change-log'),
+										}) }}</li>
+									{% endfor %}
+								</ul>
+							{% endif %}
 						</td>
 						<td class="nowrap">
-							{% if data.totalFrom != data.totalTo %}
+							{% if placed %}
+								{{ data.total|currency(order.currency) }}
+							{% elseif data.totalFrom != data.totalTo %}
 								{{ 'tab.orderTotalChanged'|t('order-change-log', { from: data.totalFrom|currency(order.currency), to: data.totalTo|currency(order.currency) }) }}
 							{% else %}
 								{{ 'tab.orderTotalUnchanged'|t('order-change-log') }}

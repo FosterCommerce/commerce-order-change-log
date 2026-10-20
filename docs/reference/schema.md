@@ -33,6 +33,18 @@ One row per save that changed a completed order.
 
 Line item totals are the line item's `total` column, as decimal strings.
 
+### `data` for a placed order
+
+The change recorded when an order is placed has a different shape.
+
+| Key | Type | Notes |
+|---|---|---|
+| `placed` | bool | Always `true`. |
+| `lineItems` | array | Each line item, `{description, sku, qty, total, fields}`. `fields` is keyed like the order's `fields`, and holds the line item's `options`, `note`, `privateNote`, and `status`, leaving out empty ones. |
+| `fields` | object | Values keyed by field, or `[]` when every value is empty. The order's `shippingMethod`, `couponCode`, `email`, `shippingAddress`, and `billingAddress`, leaving out empty ones. |
+| `customFields` | array | Each custom field with a value, `{fieldUid, name, value}`. |
+| `total` | string | The order's `totalPrice`. |
+
 ## `orderchangelog_jobusers`
 
 One row per queue job queued while a user was signed in. The plugin deletes a row when its job succeeds, and keeps a failed job's row for a retry. During Craft's garbage collection, it deletes rows older than 30 days.
